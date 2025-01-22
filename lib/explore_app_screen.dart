@@ -1,4 +1,5 @@
 import 'package:abhiyan_kaushal/create_account_screen.dart';
+import 'package:abhiyan_kaushal/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class ExploreAppScreen extends StatelessWidget {
@@ -18,7 +19,8 @@ class ExploreAppScreen extends StatelessWidget {
               height: 115,
               color: const Color(0xFFDD312D),
               child: Image.asset(
-                'assets/images/image 1.png',
+               // 'assets/images/image 1.png',
+                'assets/images/images.jpg',
                 height: 150,
                 width: 150,
                 fit: BoxFit.contain,
@@ -63,7 +65,11 @@ class ExploreAppScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context){
+                          return LoginScreen();
+                        }));
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF0500),
                         padding: const EdgeInsets.symmetric(vertical: 16.0),

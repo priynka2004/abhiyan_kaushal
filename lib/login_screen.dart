@@ -1,10 +1,62 @@
+import 'package:abhiyan_kaushal/api_service/login_api_service.dart';
+import 'package:abhiyan_kaushal/api_service/shared_perf_service.dart';
 import 'package:abhiyan_kaushal/create_account_screen.dart';
 import 'package:abhiyan_kaushal/forgot_password_screen.dart';
+import 'package:abhiyan_kaushal/nsha_muket_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  final ApiService _apiService = ApiService();
+  final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
+
+  Future<void> _login() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter email and password");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiService.login(email, password);
+      if (response.containsKey('token')) {
+        // Save token to shared preferences
+        await _sharedPreferencesService.saveToken(response['token']);
+
+        Fluttertoast.showToast(msg: "Login successful");
+
+        // Navigate to NshaMuktScreen
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NshaMuktScreen()));
+      } else {
+        Fluttertoast.showToast(msg: "Invalid login credentials");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to login. Please try again.");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +107,9 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
-                  contentPadding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Colors.grey),
@@ -76,16 +128,15 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               TextField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  contentPadding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Colors.grey),
                   ),
-                  suffixIcon: const Icon(Icons.visibility_off_outlined,
-                      color: Colors.grey),
+                  suffixIcon: const Icon(Icons.visibility_off_outlined, color: Colors.grey),
                 ),
               ),
               const SizedBox(height: 8),
@@ -118,10 +169,10 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {
-                    // Add Login functionality here
-                  },
-                  child: const Text(
+                  onPressed: _isLoading ? null : _login,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
                     'Log in',
                     style: TextStyle(
                       color: Color(0xFFFFFFFF),

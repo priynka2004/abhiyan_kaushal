@@ -1,6 +1,12 @@
+import 'dart:io';
+
+import 'package:abhiyan_kaushal/api_service/user_api_service.dart';
 import 'package:abhiyan_kaushal/login_screen.dart';
+import 'package:abhiyan_kaushal/model/user_model.dart';
+import 'package:abhiyan_kaushal/verification_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -12,16 +18,17 @@ class CreateAccountScreen extends StatefulWidget {
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  bool _isPledgeChecked = false;
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
-  final _firstNameController = TextEditingController();
+  final _referralCodeController = TextEditingController();
+  final _ageCodeController = TextEditingController();
+  final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _emailAddressController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _middleNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
   final _genderController = TextEditingController();
   final _villageController = TextEditingController();
   final _cityController = TextEditingController();
@@ -30,7 +37,103 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _pincodeController = TextEditingController();
   final _educationController = TextEditingController();
   final _professionController = TextEditingController();
-  final _referredByController = TextEditingController();
+
+  File? _profileImage;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
+  bool _isLoading = false;
+
+  Future<void> _registerAccount() async {
+    if (_formKey.currentState!.validate()) {
+
+      if (_profileImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a profile image.')),
+        );
+        return;
+      }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        int? age = int.tryParse(_ageCodeController.text) ?? 0;
+
+        final newUser = UserModel(
+          fullName: _fullNameController.text,
+          email: _emailAddressController.text,
+          mobileNumber: _phoneController.text,
+          gender: _genderController.text,
+          age: age,
+          village: _villageController.text,
+          city: _cityController.text,
+          state: _stateController.text,
+          district: _districtController.text,
+          pincode: _pincodeController.text,
+          educationQualification: _educationController.text,
+          profession: _professionController.text,
+          password: _passwordController.text,
+          profilePicture: _profileImage?.path ?? '',
+          pledge: _isPledgeChecked,
+          referralCode: _referralCodeController.text,
+        );
+
+        final response = await UserApiService.createAccount(
+          newUser,
+          _profileImage,
+        );
+
+        if (response != null && response['message'] != null) {
+          if (response['message'].contains("User registered successfully. OTP sent to email.")) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Account created successfully! OTP sent to your email.')),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VerificationScreen(
+                  userEmail: _emailAddressController.text,
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to create account. Please try again.')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to create account. Please try again.')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,21 +193,107 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     color: Color(0xFF000000),
                   ),
                 ),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: _profileImage != null
+                        ? FileImage(_profileImage!)
+                        : const AssetImage('assets/images/Star 8.png'),
+                    child: _profileImage == null
+                        ? const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                    )
+                        : null,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 _buildTextField(
-                  label: 'Email',
-                  hintText: 'example@gmail.com',
-                  keyboardType: TextInputType.emailAddress,
-                  controller: _emailAddressController,
+                  label: "Full Name",
+                  hintText: "Enter your first name",
+                  controller: _fullNameController,
+                ),
+                const SizedBox(height: 12),
+                _buildDropdownField(
+                  label: "Gender",
+                  items: ["Male", "Female", "Other"],
+                  controller: _genderController,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
+                  label: 'Age',
+                  hintText: 'Age',
+                  keyboardType: TextInputType.number,
+                  controller: _ageCodeController,
+                ),
+                _buildTextField(
+                  label: "Village",
+                  hintText: "Enter your village",
+                  controller: _villageController,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  label: "City",
+                  hintText: "Enter your city",
+                  controller: _cityController,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  label: "District",
+                  hintText: "Enter your district",
+                  controller: _districtController,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  label: "Pincode",
+                  hintText: "Enter your pincode",
+                  controller: _pincodeController,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  label: "State",
+                  hintText: "Enter your state",
+                  controller: _stateController,
+                ),
+                const SizedBox(height: 12),
+
+                _buildTextField(
+                  label: "Educational Qualification",
+                  hintText: "Enter your qualification",
+                  controller: _educationController,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  label: "Profession",
+                  hintText: "Enter your profession",
+                  controller: _professionController,
+                ),
+
+                const SizedBox(height: 12),
+                _buildTextField(
                   label: 'Mobile no.',
-                  hintText: '+91 9999999999',
+                  hintText: 'Enter your Mobile no.',
                   keyboardType: TextInputType.phone,
                   controller: _phoneController,
                 ),
                 const SizedBox(height: 12),
+                _buildTextField(
+                  label: 'Email',
+                  hintText: 'Enter your Email',
+                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailAddressController,
+                ),
+                const SizedBox(height: 12),
+
+                _buildTextField(
+                  label: "Referral Code (Optional)",
+                  hintText: "Enter referral code",
+                  controller: _referralCodeController,
+                  isOptional: true,
+                ),
                 _buildPasswordField(
                   label: 'Create a password',
                   hintText: 'must be 8 characters',
@@ -114,7 +303,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       _passwordVisible = !_passwordVisible;
                     });
                   },
-                  controller: _passwordController, // Define this TextEditingController
+                  controller: _passwordController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Password is required';
@@ -147,91 +336,33 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 ),
 
                 const SizedBox(height: 12),
-                _buildTextField(
-                  label: "First Name",
-                  hintText: "Enter your first name",
-                  controller: _firstNameController,
+                const Text(
+                  'संकल्प करता/करती हूँ कि विकसित भारत व आत्मनिर्भर भारत एवं स्वच्छ व स्वस्थ भारत तया '
+                      'नशामुक्त भारत बनाने के आंदोलन को आखिरी सांस तक करता रहूंगा/करती रहूंगी।',
+                  style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
                 ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Middle Name",
-                  hintText: "Enter your middle name",
-                  controller: _middleNameController,
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isPledgeChecked,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _isPledgeChecked = value!;
+                        });
+                      },
+                    ),
+                    const Text(
+                      'I agree to the pledge',
+                      style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Last Name",
-                  hintText: "Enter your last name",
-                  controller: _lastNameController,
-                ),
-                const SizedBox(height: 12),
-                _buildDropdownField(
-                  label: "Gender",
-                  items: ["Male", "Female", "Other"],
-                  controller: _genderController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Village",
-                  hintText: "Enter your village",
-                  controller: _villageController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "City",
-                  hintText: "Enter your city",
-                  controller: _cityController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "State",
-                  hintText: "Enter your state",
-                  controller: _stateController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "District",
-                  hintText: "Enter your district",
-                  controller: _districtController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Pincode",
-                  hintText: "Enter your pincode",
-                  controller: _pincodeController,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Educational Qualification",
-                  hintText: "Enter your qualification",
-                  controller: _educationController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Profession",
-                  hintText: "Enter your profession",
-                  controller: _professionController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Referred by (Optional)",
-                  hintText: "Enter the referral (if any)",
-                  controller: _referredByController,
-                  isOptional: true,
-                ),
+
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Form submitted successfully!')),
-                        );
-                      }
-                    },
+                    onPressed: _isPledgeChecked ? _registerAccount : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF0500),
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -250,6 +381,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 20),
                 Center(
                   child: RichText(
@@ -334,7 +466,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-
   Widget _buildTextField({
     required String label,
     required String hintText,
@@ -415,4 +546,5 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       ],
     );
   }
+
 }

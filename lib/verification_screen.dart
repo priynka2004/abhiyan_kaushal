@@ -1,10 +1,16 @@
+import 'package:abhiyan_kaushal/api_service/otp_api_service.dart';
+import 'package:abhiyan_kaushal/login_screen.dart';
 import 'package:abhiyan_kaushal/reset_password_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 class VerificationScreen extends StatefulWidget {
-  const VerificationScreen({super.key});
+  final String userEmail;
+
+  const VerificationScreen({super.key, required this.userEmail});
 
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
@@ -14,6 +20,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
   String _verificationCode = '';
   int _secondsRemaining = 20;
   Timer? _timer;
+
+  final OTPService _otpService = OTPService();
 
   @override
   void initState() {
@@ -27,8 +35,52 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _verifyOTP() async {
+    if (_verificationCode.length == 6) {
+      try {
+        final result = await _otpService.verifyOTP(widget.userEmail, _verificationCode);
+        print('API Response: $result'); // Debug log
+        if (result['message'] == 'OTP verified successfully.') {
+          Fluttertoast.showToast(
+            msg: "OTP verified successfully!",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        } else {
+          _showErrorDialog(result['message'] ?? 'Invalid OTP');
+        }
+      } catch (e) {
+        _showErrorDialog('Error: $e');
+      }
+    }
+  }
+
   void _startTimer() {
-    _secondsRemaining = 20;
+    _secondsRemaining = 120; // Set timer to 2 minutes
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
         setState(() {
@@ -40,11 +92,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
   }
 
+
   Widget _buildNumberButton(String number, [String? letters]) {
     return Expanded(
       child: InkWell(
         onTap: () {
-          if (_verificationCode.length < 4) {
+          if (_verificationCode.length < 6) {
             setState(() {
               _verificationCode += number;
             });
@@ -148,7 +201,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
                 children: [
                   TextSpan(
-                    text: 'helloworld@gmail.com',
+                    text: widget.userEmail, // Use the dynamic email here
                     style: const TextStyle(
                       color: Colors.black,
                       fontFamily: "Inter",
@@ -163,10 +216,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(4, (index) {
+              children: List.generate(6, (index) {
                 return Container(
-                  width: 60,
-                  height: 60,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8),
@@ -193,14 +246,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: _verificationCode.length == 4
-                    ? () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) {
-                        return const ResetPasswordScreen();
-                      }));
-                }
-                    : null,
+                onPressed: _verificationCode.length == 6 ? _verifyOTP : null,
                 child: const Text(
                   'Verify',
                   style: TextStyle(

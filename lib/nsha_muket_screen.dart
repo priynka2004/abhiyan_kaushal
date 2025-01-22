@@ -20,7 +20,7 @@ class _NshaMuktScreenState extends State<NshaMuktScreen> {
               height: 115,
               color: const Color(0xFFDD312D),
               child: Image.asset(
-                'assets/images/image 1.png',
+                'assets/images/images.jpg',
                 height: 150,
                 width: 150,
                 fit: BoxFit.contain,
