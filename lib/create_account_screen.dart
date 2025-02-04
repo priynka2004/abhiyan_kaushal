@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:abhiyan_kaushal/api_service/shared_perf_service.dart';
 import 'package:abhiyan_kaushal/api_service/user_api_service.dart';
 import 'package:abhiyan_kaushal/login_screen.dart';
 import 'package:abhiyan_kaushal/model/user_model.dart';
@@ -40,6 +40,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   File? _profileImage;
 
+  final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
+
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -57,6 +59,83 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   bool _isLoading = false;
+
+  // Future<void> _registerAccount() async {
+  //   if (_formKey.currentState!.validate()) {
+  //
+  //     if (_profileImage == null) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Please select a profile image.')),
+  //       );
+  //       return;
+  //     }
+  //
+  //     setState(() {
+  //       _isLoading = true;
+  //     });
+  //
+  //     try {
+  //       int? age = int.tryParse(_ageCodeController.text) ?? 0;
+  //
+  //       final newUser = UserModel(
+  //         fullName: _fullNameController.text,
+  //         email: _emailAddressController.text,
+  //         mobileNumber: _phoneController.text,
+  //         gender: _genderController.text,
+  //         age: age,
+  //         village: _villageController.text,
+  //         city: _cityController.text,
+  //         state: _stateController.text,
+  //         district: _districtController.text,
+  //         pincode: _pincodeController.text,
+  //         educationQualification: _educationController.text,
+  //         profession: _professionController.text,
+  //         password: _passwordController.text,
+  //         profilePicture: _profileImage?.path ?? '',
+  //         pledge: _isPledgeChecked,
+  //         referralCode: _referralCodeController.text,
+  //       );
+  //
+  //       final response = await UserApiService.createAccount(
+  //         newUser,
+  //         _profileImage,
+  //       );
+  //
+  //       if (response != null && response['message'] != null) {
+  //         if (response['message'].contains("User registered successfully. OTP sent to email.")) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(content: Text('Account created successfully! OTP sent to your email.')),
+  //           );
+  //
+  //           Navigator.pushReplacement(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => VerificationScreen(
+  //                 userEmail: _emailAddressController.text,
+  //               ),
+  //             ),
+  //           );
+  //         } else {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(content: Text('Failed to create account. Please try again.')),
+  //           );
+  //         }
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('Failed to create account. Please try again.')),
+  //         );
+  //       }
+  //     } catch (e) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('An error occurred: $e')),
+  //       );
+  //     } finally {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   Future<void> _registerAccount() async {
     if (_formKey.currentState!.validate()) {
@@ -76,22 +155,22 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         int? age = int.tryParse(_ageCodeController.text) ?? 0;
 
         final newUser = UserModel(
+          profilePicture: _profileImage?.path ?? '',
+          referralCode: _referralCodeController.text,
           fullName: _fullNameController.text,
-          email: _emailAddressController.text,
-          mobileNumber: _phoneController.text,
           gender: _genderController.text,
-          age: age,
+         // age: age,
           village: _villageController.text,
           city: _cityController.text,
-          state: _stateController.text,
           district: _districtController.text,
           pincode: _pincodeController.text,
-          educationQualification: _educationController.text,
-          profession: _professionController.text,
+          state: _stateController.text,
+          mobileNumber: _phoneController.text,
+          email: _emailAddressController.text,
+          // educationQualification: _educationController.text,
+          // profession: _professionController.text,
           password: _passwordController.text,
-          profilePicture: _profileImage?.path ?? '',
-          pledge: _isPledgeChecked,
-          referralCode: _referralCodeController.text,
+        //  pledge: _isPledgeChecked,
         );
 
         final response = await UserApiService.createAccount(
@@ -99,17 +178,21 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           _profileImage,
         );
 
+        await _sharedPreferencesService.saveProfileImage(_profileImage.toString());
+        await _sharedPreferencesService.saveUsername(_fullNameController.toString());
+        await _sharedPreferencesService.saveMobile(_phoneController.toString());
+
         if (response != null && response['message'] != null) {
-          if (response['message'].contains("User registered successfully. OTP sent to email.")) {
+          if (response['message'].contains("User registered successfully.")) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Account created successfully! OTP sent to your email.')),
+              const SnackBar(content: Text('Account created successfully!')),
             );
 
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => VerificationScreen(
-                  userEmail: _emailAddressController.text,
+                builder: (context) =>
+                const LoginScreen(
                 ),
               ),
             );
@@ -164,14 +247,34 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         backgroundColor: Colors.white,
         centerTitle: true,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(top: 35, right: 16),
-            child: Image.asset(
-              'assets/images/Star 8.png',
-              height: 44,
-              width: 46,
-              fit: BoxFit.contain,
-            ),
+          Row(
+            children: [
+              Container(
+                height: 100,
+                width:250,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDD312D),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.asset(
+                    "assets/images/image 1.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10,),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Image.asset(
+                  'assets/images/Star 8.png',
+                  height: 42,
+                  width: 45,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -211,6 +314,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 ),
                 const SizedBox(height: 20),
                 _buildTextField(
+                  label: "Referral Code",
+                  hintText: "Enter referral code",
+                  controller: _referralCodeController,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
                   label: "Full Name",
                   hintText: "Enter your first name",
                   controller: _fullNameController,
@@ -222,12 +331,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   controller: _genderController,
                 ),
                 const SizedBox(height: 12),
-                _buildTextField(
-                  label: 'Age',
-                  hintText: 'Age',
-                  keyboardType: TextInputType.number,
-                  controller: _ageCodeController,
-                ),
+                // _buildTextField(
+                //   label: 'Age',
+                //   hintText: 'Age',
+                //   keyboardType: TextInputType.number,
+                //   controller: _ageCodeController,
+                // ),
                 _buildTextField(
                   label: "Village",
                   hintText: "Enter your village",
@@ -258,19 +367,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   hintText: "Enter your state",
                   controller: _stateController,
                 ),
-                const SizedBox(height: 12),
-
-                _buildTextField(
-                  label: "Educational Qualification",
-                  hintText: "Enter your qualification",
-                  controller: _educationController,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  label: "Profession",
-                  hintText: "Enter your profession",
-                  controller: _professionController,
-                ),
+                // const SizedBox(height: 12),
+                // _buildTextField(
+                //   label: "Educational Qualification",
+                //   hintText: "Enter your qualification",
+                //   controller: _educationController,
+                // ),
+                // const SizedBox(height: 12),
+                // _buildTextField(
+                //   label: "Profession",
+                //   hintText: "Enter your profession",
+                //   controller: _professionController,
+                // ),
 
                 const SizedBox(height: 12),
                 _buildTextField(
@@ -288,12 +396,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                _buildTextField(
-                  label: "Referral Code (Optional)",
-                  hintText: "Enter referral code",
-                  controller: _referralCodeController,
-                  isOptional: true,
-                ),
                 _buildPasswordField(
                   label: 'Create a password',
                   hintText: 'must be 8 characters',
@@ -335,34 +437,37 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   },
                 ),
 
-                const SizedBox(height: 12),
-                const Text(
-                  'संकल्प करता/करती हूँ कि विकसित भारत व आत्मनिर्भर भारत एवं स्वच्छ व स्वस्थ भारत तया '
-                      'नशामुक्त भारत बनाने के आंदोलन को आखिरी सांस तक करता रहूंगा/करती रहूंगी।',
-                  style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
-                ),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isPledgeChecked,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isPledgeChecked = value!;
-                        });
-                      },
-                    ),
-                    const Text(
-                      'I agree to the pledge',
-                      style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
-                    ),
-                  ],
-                ),
+                // const SizedBox(height: 12),
+                // const Text(
+                //   'संकल्प करता/करती हूँ कि विकसित भारत व आत्मनिर्भर भारत एवं स्वच्छ व स्वस्थ भारत तया '
+                //       'नशामुक्त भारत बनाने के आंदोलन को आखिरी सांस तक करता रहूंगा/करती रहूंगी।',
+                //   style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
+                // ),
+                // Row(
+                //   children: [
+                //     Checkbox(
+                //       value: _isPledgeChecked,
+                //       onChanged: (bool? value) {
+                //         setState(() {
+                //           _isPledgeChecked = value!;
+                //         });
+                //       },
+                //     ),
+                //     const Text(
+                //       'I agree to the pledge',
+                //       style: TextStyle(fontSize: 16, fontFamily: "Poppins"),
+                //     ),
+                //   ],
+                // ),
 
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isPledgeChecked ? _registerAccount : null,
+                    onPressed:
+                   // _isPledgeChecked ?
+                    _registerAccount ,
+                        //: null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF0500),
                       padding: const EdgeInsets.symmetric(vertical: 16.0),

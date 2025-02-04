@@ -1,0 +1,47 @@
+name: pg_sdk_kit
+description: A Flutter SDK for seamless payment gateway integration.
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+homepage: https://getepay.in
+repository: https://git.getepay.in/mobile-team/getepay-pg-kit-flutter.git
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  crypto: ^3.0.2
+  encrypt: ^5.0.1
+  connectivity_plus: ^4.0.2
+  cupertino_icons: ^1.0.2
+  freezed_annotation: ^2.2.0
+  json_annotation: ^4.8.1
+  flutter_bloc: ^8.1.2
+  webview_flutter: ^4.2.0
+  intl: ^0.18.1
+  url_launcher: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  build_runner: ^2.3.3
+  freezed: ^2.3.3
+  json_serializable: ^6.6.2
+
+flutter:
+  uses-material-design: true
+
+  # Uncomment assets section if you're using these assets, or remove if not needed
+  # assets:
+  #   - lib/bin/asset/gpay.png
+  #   - lib/bin/asset/paytm.png
+  #   - lib/bin/asset/phonepe.png
+
+module:
+  androidX: true
+  androidPackage: com.getepay.pg_sdk_kit
+  iosBundleIdentifier: com.getepay.pgSdkKit

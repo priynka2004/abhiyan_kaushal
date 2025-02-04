@@ -1,21 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:abhiyan_kaushal/api/api_endpoints.dart';
 import 'package:http/http.dart' as http;
 import 'package:abhiyan_kaushal/model/user_model.dart';
 
 class UserApiService {
   static Future<Map<String, dynamic>?> createAccount(UserModel user, File? profilePicture) async {
-    const url = 'https://nashamukti.bonanso.com/auth/signup/';
+    //const url = 'https://nashamukti.bonanso.com/auth/signup/';
 
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(url));
+      var request = http.MultipartRequest('POST',  Uri.parse(ApiEndpoints.signup));
 
       request.headers.addAll({
         'Accept': 'application/json',
       });
 
+      request.fields['referral_code'] = user.referralCode ?? '';
       request.fields['full_name'] = user.fullName ?? '';
-      request.fields['age'] = user.age.toString();
+     // request.fields['age'] = user.age.toString();
       request.fields['email'] = user.email ?? '';
       request.fields['password'] = user.password ?? '';
       request.fields['confirm_password'] = user.password ?? '';
@@ -26,9 +28,9 @@ class UserApiService {
       request.fields['state'] = user.state ?? '';
       request.fields['district'] = user.district ?? '';
       request.fields['pincode'] = user.pincode ?? '';
-      request.fields['education_qualification'] = user.educationQualification ?? '';
-      request.fields['profession'] = user.profession ?? '';
-      request.fields['pledge'] = user.pledge?.toString() ?? 'false';
+      // request.fields['education_qualification'] = user.educationQualification ?? '';
+      // request.fields['profession'] = user.profession ?? '';
+      // request.fields['pledge'] = user.pledge?.toString() ?? 'false';
 
       if (profilePicture != null && profilePicture.existsSync()) {
         request.files.add(await http.MultipartFile.fromPath(
@@ -41,7 +43,9 @@ class UserApiService {
 
       if (response.statusCode == 201) {
         final responseData = await response.stream.bytesToString();
+        print("$response");
         return json.decode(responseData);
+
       } else {
         final responseData = await response.stream.bytesToString();
         print('Failed to create account: $responseData');
@@ -53,4 +57,5 @@ class UserApiService {
     }
   }
 }
+
 

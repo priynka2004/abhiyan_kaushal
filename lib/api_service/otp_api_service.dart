@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:abhiyan_kaushal/api/api_endpoints.dart';
 import 'package:http/http.dart' as http;
 
 class OTPService {
@@ -8,7 +9,7 @@ class OTPService {
   Future<Map<String, dynamic>> verifyOTP(String email, String otpCode) async {
     try {
       final response = await http.post(
-        Uri.parse(_baseUrl),
+        Uri.parse(ApiEndpoints.verifyOtp),
         headers: {
           'Content-Type': 'application/json',
         },

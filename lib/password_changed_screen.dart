@@ -8,6 +8,56 @@ class PasswordChangedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 100,
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFD8DADC), width: 1.0),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(8),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 14),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        actions: [
+          Row(
+            children: [
+              Container(
+                height: 100,
+                width:250,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDD312D),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.asset(
+                    "assets/images/image 1.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8,),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Image.asset(
+                  'assets/images/Star 8.png',
+                  height: 43,
+                  width: 45,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(24.0),

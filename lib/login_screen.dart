@@ -18,10 +18,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _passwordVisible = false;
 
   final ApiService _apiService = ApiService();
   final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
-
   Future<void> _login() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
@@ -38,12 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await _apiService.login(email, password);
       if (response.containsKey('token')) {
-        // Save token to shared preferences
         await _sharedPreferencesService.saveToken(response['token']);
+
+        await _sharedPreferencesService.saveEmail(email);
 
         Fluttertoast.showToast(msg: "Login successful");
 
-        // Navigate to NshaMuktScreen
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NshaMuktScreen()));
       } else {
         Fluttertoast.showToast(msg: "Invalid login credentials");
@@ -63,22 +63,58 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         toolbarHeight: 90,
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 35),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: const Color(0xFFD8DADC),
+                width: 1.0,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(8),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios,
+                  color: Colors.black, size: 14),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        ),
         backgroundColor: Colors.white,
         centerTitle: true,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(
-              top: 35,
-              right: 16,
-            ),
-            child: Image.asset(
-              'assets/images/Star 8.png',
-              height: 44,
-              width: 46,
-              fit: BoxFit.contain,
-            ),
+          Row(
+            children: [
+              Container(
+                height: 100,
+                width:250,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDD312D),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.asset(
+                    "assets/images/image 1.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10,),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Image.asset(
+                  'assets/images/Star 8.png',
+                  height: 42,
+                  width: 45,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -129,14 +165,24 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: !_passwordVisible, // Toggle visibility
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Colors.grey),
                   ),
-                  suffixIcon: const Icon(Icons.visibility_off_outlined, color: Colors.grey),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.black,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
